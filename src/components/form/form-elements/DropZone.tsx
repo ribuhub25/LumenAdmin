@@ -56,15 +56,17 @@ const DropzoneComponent: React.FC = () => {
 
             {/* Text Content */}
             <h4 className="mb-3 font-semibold text-gray-800 text-theme-xl dark:text-white/90">
-              {isDragActive ? "Drop Files Here" : "Drag & Drop Files Here"}
+              {isDragActive
+                ? "Suelta los archivos aquí"
+                : "Arrastra y suelta los archivos aquí"}
             </h4>
 
             <span className=" text-center mb-5 block w-full max-w-[290px] text-sm text-gray-700 dark:text-gray-400">
-              Drag and drop your PNG, JPG, WebP, SVG images here or browse
+              Seleccione y suelta tu PNG, JPG, WebP, SVG, imágenes o búscalas
             </span>
 
             <span className="font-medium underline text-theme-sm text-brand-500">
-              Browse File
+              Buscar Archivo
             </span>
           </div>
         </form>
