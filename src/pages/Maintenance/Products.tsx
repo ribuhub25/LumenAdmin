@@ -4,7 +4,6 @@ import Select from "../../components/form/Select";
 import ProductDataTable from "../../components/tables/BasicTables/ProductDataTable";
 import Button from "../../components/ui/button/Button";
 import useFetch from "../../hooks/useFetch";
-import { useModal } from "../../hooks/useModal";
 import { ProductDTO } from "../../models/ProductDTO";
 
 const options = [
