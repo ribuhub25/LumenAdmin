@@ -1,10 +1,11 @@
+import { useEffect, useState } from "react";
 import ComponentCard from "../../components/common/ComponentCard";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import Select from "../../components/form/Select";
 import ProductDataTable from "../../components/tables/BasicTables/ProductDataTable";
 import Button from "../../components/ui/button/Button";
 import useFetch from "../../hooks/useFetch";
-import { ProductDTO } from "../../models/ProductDTO";
+import { IProduct } from "../../models/ProductDTO";
 
 const options = [
   { value: "10", label: "10 Items" },
@@ -14,9 +15,25 @@ const options = [
 ];
 
 export default function Products() {
-  const { data, loading, error } = useFetch<ProductDTO[]>(
+  const { data, loading, error } = useFetch<IProduct[]>(
     "http://localhost:3000/api/products"
   );
+  const [products, setProducts] = useState<IProduct[] | null>(null);
+
+  // Solo inicializa una vez
+  useEffect(() => {
+    if (data && products === null) {
+      setProducts(data);      
+    }
+  }, [data, products]);
+
+
+  const updateProductInList = (updated: IProduct) => {
+    setProducts((prev) =>
+      prev ? prev.map((p) => (p.id === updated.id ? updated : p)) : null
+    );
+  };
+
   if (loading) return <p>Cargando...</p>;
   if (error) return <p>Error: {error}</p>;
 
@@ -37,7 +54,7 @@ export default function Products() {
                 placeholder="N°. Items"
                 onChange={handleSelectChange}
                 className="dark:bg-dark-900 xl:w-[120px]"
-                defaultValue="10"
+                value="10"
               />
               <Button size="sm" variant="primary">
                 Agregar Nuevo
@@ -68,7 +85,14 @@ export default function Products() {
               />
             </div>
           </div>
-          <ProductDataTable products={data} />
+          {products != null ? (
+            <ProductDataTable
+              products={products}
+              onUpdate={(p) => updateProductInList(p)}
+            />
+          ) : (
+            <></>
+          )}
         </ComponentCard>
       </div>
     </>

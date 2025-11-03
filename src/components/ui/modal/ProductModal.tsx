@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal } from ".";
 import Input from "../../form/input/InputField";
 import TextArea from "../../form/input/TextArea";
@@ -7,39 +7,72 @@ import Select from "../../form/Select";
 import Switch from "../../form/switch/Switch";
 import Button from "../button/Button";
 import MultiSelect from "../../form/MultiSelect";
-import { ProductDTO } from "../../../models/ProductDTO";
+import { PRODUCT_INITIAL, IProduct } from "../../../models/ProductDTO";
 import useFetch from "../../../hooks/useFetch";
+import { postData } from "../../../hooks/postData";
+import { ProductResponse } from "../../../models/ProductResponse";
 
 interface MultiOptions {
   value: string;
   text: string;
   selected: boolean;
 }
-
 interface Option {
   value: string;
   label: string;
 }
-
 interface PropsModal {
-  product: ProductDTO | null;
+  product: IProduct;
   isOpen: boolean;
   closeModal: () => void;
+  onUpdate: (p: IProduct) => void;
 }
+
+const castToProductResponse = (form: IProduct): ProductResponse => {
+  return {
+    id: form.id,
+    created_at:
+      form.created_at instanceof Date
+        ? form.created_at.toISOString()
+        : form.created_at, // si ya es string, lo deja igual
+    name: form.name,
+    price: form.price,
+    rating: form.rating,
+    review_count: form.review_count,
+    href: form.href,
+    description: form.description,
+    imageSrc: form.imageSrc,
+    imageAlt: form.imageAlt,
+    status: form.status,
+    brand_id: form.brand_id, // ← cambio de nombre
+    stock: form.stock,
+    long_description: form.long_description ?? "", // ← si no existe, lo rellena
+    features: form.features ?? "", // ← si no existe, lo rellena
+  };
+};
 
 export default function ProductModal({
   product,
   isOpen,
   closeModal,
+  onUpdate,
 }: PropsModal) {
-  const fetchBrandOptions = useFetch<Option[]>(
-    "http://localhost:3000/api/brandlist"
-  );
+  useEffect(() => {
+    if (product && isOpen) {
+      setProductForm({ ...product });
+      setSelectedValues(product.categories.map((cat) => cat.toString()));
+    }
+  }, [product, isOpen]);
+
+  //METODOS PARA CARGAR LOS COMBOS
   const fetchCategoryOptions = useFetch<Option[]>(
-    "http://localhost:3000/api/categorylist"
+    "http://localhost:3000/api/brands/categorylist"
+  );
+  const fetchBrandOptions = useFetch<Option[]>(
+    "http://localhost:3000/api/brands/list"
   );
 
-  // Transformación
+  // OPCIONES DE CATEGORIAS
   const categoryMultiOptions: MultiOptions[] = (
     fetchCategoryOptions.data || []
   ).map((option: Option) => ({
@@ -49,25 +82,29 @@ export default function ProductModal({
   }));
 
   //CONSTANTES PARA EL FORMULARIO
-  const [message, setMessage] = useState("");
+  const [productForm, setProductForm] = useState<IProduct>(PRODUCT_INITIAL);
   const [selectedValues, setSelectedValues] = useState<string[]>([]);
 
-  const handleSwitchChange = (checked: boolean) => {
-    console.log("Switch is now:", checked ? "ON" : "OFF");
-  };
-
-  const handleSave = () => {
-    // Handle save logic here
-    console.log("Saving changes...");
-    closeModal();
-  };
-
-  const handleSelectChange = (value: string) => {
-    console.log("Selected value:", value);
+  const handleSubmit = async (e?: React.MouseEvent<HTMLButtonElement>) => {
+    e?.preventDefault(); // ← evita el reload si se dispara desde un form
+    try {
+      const updatedProduct = {
+        ...productForm,
+      };
+      const castedProduct = castToProductResponse(updatedProduct);
+      await postData("http://localhost:3000/api/products/save", castedProduct);
+      onUpdate(updatedProduct);
+      closeModal();
+    } catch (error) {
+      console.error("Error al guardar el producto:", error);
+    }
   };
 
   if (fetchBrandOptions.loading) return <p>Cargando...</p>;
   if (fetchBrandOptions.error) return <p>Error: {fetchBrandOptions.error}</p>;
+  if (fetchBrandOptions.loading || fetchCategoryOptions.loading) {
+    return <p>Cargando opciones...</p>;
+  }
 
   return (
     <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
@@ -91,8 +128,13 @@ export default function ProductModal({
                   <div>
                     <Label>Nombre</Label>
                     <TextArea
-                      value={product?.name}
-                      onChange={(value) => setMessage(value)}
+                      value={productForm.name ?? ""}
+                      onChange={(e) =>
+                        setProductForm((prev) => ({
+                          ...prev,
+                          name: e,
+                        }))
+                      }
                       placeholder="Nombre del Producto"
                       rows={2}
                     />
@@ -100,15 +142,42 @@ export default function ProductModal({
                   <div className="flex flex-row gap-2">
                     <div>
                       <Label>Precio</Label>
-                      <Input type="text" value={product?.price} />
+                      <Input
+                        type="number"
+                        value={productForm.price ?? 0}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setProductForm((prev) => ({
+                            ...prev,
+                            price: parseFloat(e.target.value) || 0,
+                          }))
+                        }
+                      />
                     </div>
                     <div>
                       <Label>Descuento</Label>
-                      <Input type="text" value={product?.discount} />
+                      <Input
+                        type="number"
+                        value={productForm.disc_value ?? 0}
+                        // onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        //   setProductForm((prev) => ({
+                        //     ...prev,
+                        //     discount: parseFloat(e.target.value) || 0,
+                        //   }))
+                        // }
+                      />
                     </div>
                     <div>
                       <Label>Stock</Label>
-                      <Input type="text" value={product?.stock} />
+                      <Input
+                        type="number"
+                        value={productForm.stock ?? 0}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setProductForm((prev) => ({
+                            ...prev,
+                            stock: parseFloat(e.target.value) || 0,
+                          }))
+                        }
+                      />
                     </div>
                   </div>
                   <div className="pt-2 flex flex-row gap-2 justify-between">
@@ -117,15 +186,26 @@ export default function ProductModal({
                       <Select
                         options={fetchBrandOptions.data!}
                         placeholder="Seleccione una marca"
-                        onChange={handleSelectChange}
+                        value={productForm.brand_id?.toString() || ""}
+                        onChange={(value: string) =>
+                          setProductForm((prev) => ({
+                            ...prev,
+                            brand_id: parseInt(value),
+                          }))
+                        }
                         className="dark:bg-dark-900"
                       />
                     </div>
                     <div className="my-auto pt-5">
                       <Switch
                         label="Producto Activo"
-                        defaultChecked={product?.status == 1 ? true : false}
-                        onChange={handleSwitchChange}
+                        checked={productForm.status === 1}
+                        onChange={(checked: boolean) => {
+                          setProductForm((prev) => ({
+                            ...prev,
+                            status: checked ? 1 : 0,
+                          }));
+                        }}
                       />
                     </div>
                   </div>
@@ -153,7 +233,7 @@ export default function ProductModal({
             <Button size="sm" variant="outline" onClick={closeModal}>
               Cerrar
             </Button>
-            <Button size="sm" onClick={handleSave}>
+            <Button size="sm" onClick={handleSubmit}>
               Guardar Cambios
             </Button>
           </div>

@@ -1,51 +1,49 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from "react";
 
 function useFetch<T>(url: string) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const signal = controller.signal;
+  const controllerRef = new AbortController();
 
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(url, {
-          method: 'GET',
-          credentials: 'include', // 👈 importante para CORS con cookies/sesiones
-          headers: {
-            'Content-Type': 'application/json',
-            // Puedes agregar más headers si lo necesitas
-            // 'Authorization': `Bearer ${token}`,
-          },
-          signal
-        });
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(url, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        signal: controllerRef.signal,
+      });
 
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
-
-        const result = await response.json();
-        setData(result);
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          setError(err.message);
-        }
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
-    };
 
+      const result = await response.json();
+      setData(result);
+      setError(null);
+    } catch (err: any) {
+      if (err.name !== "AbortError") {
+        setError(err.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [url]);
+
+  useEffect(() => {
     fetchData();
 
     return () => {
-      controller.abort();
+      controllerRef.abort();
     };
-  }, [url]);
+  }, [fetchData]);
 
-  return { data, loading, error };
+  return { data, loading, error, refetch: fetchData };
 }
 
 export default useFetch;

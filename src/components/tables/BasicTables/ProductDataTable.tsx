@@ -8,23 +8,25 @@ import {
 
 import Badge from "../../ui/badge/Badge";
 import { ListIcon, PencilIcon, TrashBinIcon } from "../../../icons";
-import { ProductDTO } from "../../../models/ProductDTO";
+import { PRODUCT_INITIAL, IProduct } from "../../../models/ProductDTO";
 import ProductModal from "../../ui/modal/ProductModal";
 import { useState } from "react";
 import { useModal } from "../../../hooks/useModal";
 
 interface PropsDataTable {
-  products: ProductDTO[] | null;
+  products: IProduct[];
+  onUpdate: (product: IProduct) => void;
 }
 
-export default function ProductDataTable({ products }: PropsDataTable) {
+export default function ProductDataTable({ products, onUpdate }: PropsDataTable) {
   const { openModal, closeModal, isOpen } = useModal();
-  const [selectedProduct, setSelectedProduct] = useState<ProductDTO | null>(null);
-  const handleEditClick = (p: ProductDTO) => {
+  const [selectedProduct, setSelectedProduct] =
+    useState<IProduct>(PRODUCT_INITIAL);
+  const handleEditClick = (p: IProduct) => {
     setSelectedProduct(p);
     openModal();
-  }
-
+  };
+  
   return (
     <>
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -81,7 +83,7 @@ export default function ProductDataTable({ products }: PropsDataTable) {
             {/* Table Body */}
             {products ? (
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                {products.map((product: ProductDTO) => (
+                {products.map((product: IProduct) => (
                   <TableRow key={product.id}>
                     <TableCell className="px-5 py-4 sm:px-6 text-start">
                       <div className="flex items-center gap-3">
@@ -104,7 +106,7 @@ export default function ProductDataTable({ products }: PropsDataTable) {
                       {product.price.toFixed(2)}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-center text-gray-500 text-theme-sm dark:text-gray-400">
-                      {product.discount.toFixed(2)}%
+                      {product.disc_value.toFixed(2)}%
                     </TableCell>
                     <TableCell className="px-4 py-3 text-center text-gray-500 text-theme-sm dark:text-gray-400">
                       {product.brand_name}
@@ -168,14 +170,19 @@ export default function ProductDataTable({ products }: PropsDataTable) {
         </div>
       </div>
       {/*MODAL DE EDICIÓN */}
-      <ProductModal product={selectedProduct} closeModal={closeModal} isOpen={isOpen}/>    
+      <ProductModal
+        product={selectedProduct}
+        closeModal={closeModal}
+        isOpen={isOpen}
+        onUpdate={onUpdate}
+      />
 
       {/*MODAL PARA IMÁGENES */}
       {/* <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
         <div className="pt-3">
           <DropzoneComponent />
         </div>
-      </Modal> */}  
+      </Modal> */}
     </>
   );
 }
