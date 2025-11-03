@@ -22,6 +22,9 @@ import Products from "./pages/Maintenance/Products";
 import Brands from "./pages/Maintenance/Brands";
 import Categories from "./pages/Maintenance/Categories";
 import Customers from "./pages/Maintenance/Customers";
+import PrivateRoute from './components/routes/PrivateRoute';
+
+
 
 export default function App() {
   return (
@@ -29,46 +32,46 @@ export default function App() {
       <Router>
         <ScrollToTop />
         <Routes>
-          {/* Dashboard Layout */}
-          <Route element={<AppLayout />}>
-            <Route index path="/" element={<Home />} />
-
-            {/* Maintenance */}
-            <Route index path="/products" element={<Products />} />
-            <Route index path="/brands" element={<Brands />} />
-            <Route index path="/categories" element={<Categories />} />
-            <Route index path="/customers" element={<Customers />} />
-            
-            {/* Others Page */}
-            <Route path="/profile" element={<UserProfiles />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/blank" element={<Blank />} />
-
-            {/* Forms */}
-            <Route path="/form-elements" element={<FormElements />} />
-
-            {/* Tables */}
-            <Route path="/basic-tables" element={<BasicTables />} />
-
-            {/* Ui Elements */}
-            <Route path="/alerts" element={<Alerts />} />
-            <Route path="/avatars" element={<Avatars />} />
-            <Route path="/badge" element={<Badges />} />
-            <Route path="/buttons" element={<Buttons />} />
-            <Route path="/images" element={<Images />} />
-            <Route path="/videos" element={<Videos />} />
-
-            {/* Charts */}
-            <Route path="/line-chart" element={<LineChart />} />
-            <Route path="/bar-chart" element={<BarChart />} />
-          </Route>
-
           {/* Auth Layout */}
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
-
           {/* Fallback Route */}
           <Route path="*" element={<NotFound />} />
+          {/* Dashboard Layout */}
+          <Route element={<PrivateRoute />}>
+            <Route element={<AppLayout />}>
+              <Route index path="/" element={<Home />} />
+
+              {/* Maintenance */}
+              <Route index path="/products" element={<Products />} />
+              <Route index path="/brands" element={<Brands />} />
+              <Route index path="/categories" element={<Categories />} />
+              <Route index path="/customers" element={<Customers />} />
+
+              {/* Others Page */}
+              <Route path="/profile" element={<UserProfiles />} />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/blank" element={<Blank />} />
+
+              {/* Forms */}
+              <Route path="/form-elements" element={<FormElements />} />
+
+              {/* Tables */}
+              <Route path="/basic-tables" element={<BasicTables />} />
+
+              {/* Ui Elements */}
+              <Route path="/alerts" element={<Alerts />} />
+              <Route path="/avatars" element={<Avatars />} />
+              <Route path="/badge" element={<Badges />} />
+              <Route path="/buttons" element={<Buttons />} />
+              <Route path="/images" element={<Images />} />
+              <Route path="/videos" element={<Videos />} />
+
+              {/* Charts */}
+              <Route path="/line-chart" element={<LineChart />} />
+              <Route path="/bar-chart" element={<BarChart />} />
+            </Route>
+          </Route>
         </Routes>
       </Router>
     </>

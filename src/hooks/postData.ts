@@ -1,11 +1,13 @@
 import { ProductResponse } from "../models/ProductResponse";
 
 export const postData = async (url: string, data: ProductResponse) => {
+  const token = localStorage.getItem("authToken");
   try {
     const response = await fetch(url, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
       },
       body: JSON.stringify(data),
     });
