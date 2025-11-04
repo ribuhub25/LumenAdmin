@@ -11,6 +11,7 @@ import { PRODUCT_INITIAL, IProduct } from "../../../models/ProductDTO";
 import useFetch from "../../../hooks/useFetch";
 import { postData } from "../../../hooks/postData";
 import { ProductResponse } from "../../../models/ProductResponse";
+import { ICategory } from "../../../models/CategoryDTO";
 
 interface MultiOptions {
   value: string;
@@ -48,6 +49,7 @@ const castToProductResponse = (form: IProduct): ProductResponse => {
     stock: form.stock,
     long_description: form.long_description ?? "", // ← si no existe, lo rellena
     features: form.features ?? "", // ← si no existe, lo rellena
+    categories: form.categories.map(c=>c.id.toString())
   };
 };
 
@@ -57,13 +59,6 @@ export default function ProductModal({
   closeModal,
   onUpdate,
 }: PropsModal) {
-  useEffect(() => {
-    if (product && isOpen) {
-      setProductForm({ ...product });
-      setSelectedValues(product.categories.map((cat) => cat.toString()));
-    }
-  }, [product, isOpen]);
-
   //METODOS PARA CARGAR LOS COMBOS
   const fetchCategoryOptions = useFetch<Option[]>(
     "http://localhost:3000/api/brands/categorylist"
@@ -72,18 +67,23 @@ export default function ProductModal({
     "http://localhost:3000/api/brands/list"
   );
 
+  useEffect(() => {
+    if (product && isOpen) {
+      setProductForm({ ...product });
+    }
+  }, [product, isOpen]);
+
   // OPCIONES DE CATEGORIAS
   const categoryMultiOptions: MultiOptions[] = (
     fetchCategoryOptions.data || []
   ).map((option: Option) => ({
     value: option.value,
     text: option.label,
-    selected: true, // o true si quieres marcar alguno por defecto
+    selected: false, // o true si quieres marcar alguno por defecto
   }));
 
   //CONSTANTES PARA EL FORMULARIO
   const [productForm, setProductForm] = useState<IProduct>(PRODUCT_INITIAL);
-  const [selectedValues, setSelectedValues] = useState<string[]>([]);
 
   const handleSubmit = async (e?: React.MouseEvent<HTMLButtonElement>) => {
     e?.preventDefault(); // ← evita el reload si se dispara desde un form
@@ -157,13 +157,8 @@ export default function ProductModal({
                       <Label>Descuento</Label>
                       <Input
                         type="number"
+                        disabled
                         value={productForm.disc_value ?? 0}
-                        // onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        //   setProductForm((prev) => ({
-                        //     ...prev,
-                        //     discount: parseFloat(e.target.value) || 0,
-                        //   }))
-                        // }
                       />
                     </div>
                     <div>
@@ -191,6 +186,10 @@ export default function ProductModal({
                           setProductForm((prev) => ({
                             ...prev,
                             brand_id: parseInt(value),
+                            brand_name:
+                              fetchBrandOptions.data?.find(
+                                (b) => b.value == value
+                              )?.label ?? "",
                           }))
                         }
                         className="dark:bg-dark-900"
@@ -220,12 +219,24 @@ export default function ProductModal({
                 <MultiSelect
                   label="Categorias"
                   options={categoryMultiOptions}
-                  defaultSelected={["1", "3"]}
-                  onChange={(values) => setSelectedValues(values)}
+                  defaultSelected={productForm.categories.map((c) =>
+                    c.id.toString()
+                  )}
+                  onChange={(values) => {
+                    const selectedCategories: ICategory[] = categoryMultiOptions
+                      .filter((opt) => values.includes(opt.value))
+                      .map((opt) => ({
+                        id: parseInt(opt.value),
+                        name: opt.text,
+                        href: "",
+                      }));
+
+                    setProductForm((prev) => ({
+                      ...prev,
+                      categories: selectedCategories,
+                    }));
+                  }}
                 />
-                <p className="sr-only">
-                  Selected Values: {selectedValues.join(", ")}
-                </p>
               </div>
             </div>
           </div>

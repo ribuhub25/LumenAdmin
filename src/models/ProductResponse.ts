@@ -14,4 +14,5 @@ export interface ProductResponse {
   stock: number;
   long_description: string;
   features: string;
+  categories: Array<string>;
 }
