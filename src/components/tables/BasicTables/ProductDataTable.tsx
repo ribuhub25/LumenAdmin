@@ -12,21 +12,47 @@ import { PRODUCT_INITIAL, IProduct } from "../../../models/ProductDTO";
 import ProductModal from "../../ui/modal/ProductModal";
 import { useState } from "react";
 import { useModal } from "../../../hooks/useModal";
+import { ArrowsUpDownIcon } from "@heroicons/react/20/solid";
 
 interface PropsDataTable {
   products: IProduct[];
   onUpdate: (product: IProduct) => void;
+  loading: boolean;
+  onSortChange: (sort: string) => void;
+  sort: string
 }
 
-export default function ProductDataTable({ products, onUpdate }: PropsDataTable) {
+const Headers = [
+  { name: "Nombre", orderable: true, visible: true, sortValue: "name" },
+  { name: "Precio", orderable: true, visible: true, sortValue: "price" },
+  {
+    name: "Descuento",
+    orderable: true,
+    visible: true,
+    sortValue: "disc_value",
+  },
+  { name: "Marca", orderable: true, visible: true, sortValue: "brand_name" },
+  { name: "Stock", orderable: true, visible: true, sortValue: "stock" },
+  { name: "Estado", orderable: false, visible: true, sortValue: "" },
+  { name: "Acciones", orderable: false, visible: true, sortValue: "" },
+];
+
+export default function ProductDataTable({
+  products,
+  onUpdate,
+  loading,
+  onSortChange,
+  sort
+}: PropsDataTable) {
   const { openModal, closeModal, isOpen } = useModal();
   const [selectedProduct, setSelectedProduct] =
     useState<IProduct>(PRODUCT_INITIAL);
   const handleEditClick = (p: IProduct) => {
+    console.log(p);
     setSelectedProduct(p);
     openModal();
   };
-  
+
   return (
     <>
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -35,53 +61,34 @@ export default function ProductDataTable({ products, onUpdate }: PropsDataTable)
             {/* Table Header */}
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Nombre
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Precio
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Descuento
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Marca
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Stock
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Estado
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Acciones
-                </TableCell>
+                {Headers.map((header) => (
+                  <TableCell
+                    key={header.name}
+                    isHeader
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  >
+                    <span className="flex justify-between gap-1">
+                      {header.name}
+                      {header.orderable ? (
+                        <ArrowsUpDownIcon
+                          className={`size-4 cursor-pointer transition-colors ${
+                            sort.startsWith(header.sortValue)
+                              ? "text-blue-500"
+                              : "text-gray-400"
+                          }`}
+                          onClick={() => onSortChange(header.sortValue)}
+                        />
+                      ) : (
+                        <></>
+                      )}
+                    </span>
+                  </TableCell>
+                ))}
               </TableRow>
             </TableHeader>
 
             {/* Table Body */}
-            {products ? (
+            {!loading ? (
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {products.map((product: IProduct) => (
                   <TableRow key={product.id}>
@@ -176,13 +183,6 @@ export default function ProductDataTable({ products, onUpdate }: PropsDataTable)
         isOpen={isOpen}
         onUpdate={onUpdate}
       />
-
-      {/*MODAL PARA IMÁGENES */}
-      {/* <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
-        <div className="pt-3">
-          <DropzoneComponent />
-        </div>
-      </Modal> */}
     </>
   );
 }

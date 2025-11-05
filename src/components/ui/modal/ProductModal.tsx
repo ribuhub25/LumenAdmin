@@ -49,7 +49,7 @@ const castToProductResponse = (form: IProduct): ProductResponse => {
     stock: form.stock,
     long_description: form.long_description ?? "", // ← si no existe, lo rellena
     features: form.features ?? "", // ← si no existe, lo rellena
-    categories: form.categories.map(c=>c.id.toString())
+    categories: form.categories.map((c) => c.id.toString()),
   };
 };
 
@@ -66,21 +66,6 @@ export default function ProductModal({
   const fetchBrandOptions = useFetch<Option[]>(
     "http://localhost:3000/api/brands/list"
   );
-
-  useEffect(() => {
-    if (product && isOpen) {
-      setProductForm({ ...product });
-    }
-  }, [product, isOpen]);
-
-  // OPCIONES DE CATEGORIAS
-  const categoryMultiOptions: MultiOptions[] = (
-    fetchCategoryOptions.data || []
-  ).map((option: Option) => ({
-    value: option.value,
-    text: option.label,
-    selected: false, // o true si quieres marcar alguno por defecto
-  }));
 
   //CONSTANTES PARA EL FORMULARIO
   const [productForm, setProductForm] = useState<IProduct>(PRODUCT_INITIAL);
@@ -99,6 +84,21 @@ export default function ProductModal({
       console.error("Error al guardar el producto:", error);
     }
   };
+
+  useEffect(() => {
+    if (product && isOpen) {
+      setProductForm({ ...product });
+    }
+  }, [product, isOpen]);
+
+  // OPCIONES DE CATEGORIAS
+  const categoryMultiOptions: MultiOptions[] = (
+    fetchCategoryOptions.data || []
+  ).map((option: Option) => ({
+    value: option.value,
+    text: option.label,
+    selected: true, // o true si quieres marcar alguno por defecto
+  }));
 
   if (fetchBrandOptions.loading) return <p>Cargando...</p>;
   if (fetchBrandOptions.error) return <p>Error: {fetchBrandOptions.error}</p>;
@@ -219,7 +219,7 @@ export default function ProductModal({
                 <MultiSelect
                   label="Categorias"
                   options={categoryMultiOptions}
-                  defaultSelected={productForm.categories.map((c) =>
+                  value={productForm.categories.map((c) =>
                     c.id.toString()
                   )}
                   onChange={(values) => {

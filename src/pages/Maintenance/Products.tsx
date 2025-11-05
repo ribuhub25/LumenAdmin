@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ComponentCard from "../../components/common/ComponentCard";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import Select from "../../components/form/Select";
@@ -6,6 +6,10 @@ import ProductDataTable from "../../components/tables/BasicTables/ProductDataTab
 import Button from "../../components/ui/button/Button";
 import useFetch from "../../hooks/useFetch";
 import { IProduct } from "../../models/ProductDTO";
+import Pagination from "../../components/ui/paginate/Pagination";
+import PropsPaginate, {
+  PAGINATE_INITIAL,
+} from "../../components/ui/paginate/paginate";
 
 const options = [
   { value: "10", label: "10 Items" },
@@ -15,18 +19,46 @@ const options = [
 ];
 
 export default function Products() {
-  const { data, loading, error } = useFetch<IProduct[]>(
-    "http://localhost:3000/api/products"
-  );
+  const [paginate, setPaginate] = useState<PropsPaginate>(PAGINATE_INITIAL);
+  const [sort, setSort] = useState<string>("");
   const [products, setProducts] = useState<IProduct[] | null>(null);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const fetchUrl = useMemo(() => {
+    return `http://localhost:3000/api/products?page=${paginate.currentPage}&limit=${paginate.numberPages}&sort=${sort}&search=${debouncedSearch}`;
+  }, [paginate.currentPage, paginate.numberPages, sort, debouncedSearch]);
+  const { data, loading, error, total } = useFetch<IProduct[]>(fetchUrl);
+  const [numberPages, setNumberPages] = useState("10");
 
   // Solo inicializa una vez
   useEffect(() => {
-    if (data && products === null) {
-      setProducts(data);      
+    if (data) {
+      setPaginate((prev) => ({
+        ...prev,
+        numberResults: data.length,
+        totalResults: total,
+        onUpdatePage: (page: number) => {
+          setPaginate((prev) => ({ ...prev, currentPage: page }));
+        },
+      }));
+      setProducts(data);
     }
-  }, [data, products]);
+  }, [data, total]);
 
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedSearch(search); // actualiza solo después de un pequeño delay
+    }, 600); // puedes ajustar el tiempo (ms)
+
+    return () => clearTimeout(timeout); // limpia el timeout si el usuario sigue escribiendo
+  }, [search]);
+
+  useEffect(() => {
+    setPaginate((prev) => ({
+      ...prev,
+      currentPage: 1, // ← reinicia la página
+    }));
+  }, [debouncedSearch]);
 
   const updateProductInList = (updated: IProduct) => {
     setProducts((prev) =>
@@ -34,13 +66,30 @@ export default function Products() {
     );
   };
 
-  if (loading) return <p>Cargando...</p>;
+  function toggleSort(field: string) {
+    setSort((prev) => {
+      const [currentField, currentDir] = prev.split(":");
+      if (currentField === field) {
+        return `${field}:${currentDir === "asc" ? "desc" : "asc"}`;
+      }
+      return `${field}:asc`;
+    });
+  }
+  
+  function handleSelectChange(value: string) {
+    const numPages = parseInt(value);
+    if (paginate.numberPages === numPages) return;
+    
+    setNumberPages(value);
+    setPaginate((prev) => ({
+      ...prev,
+      numberPages: numPages,
+      currentPage: 1,
+    }));
+  }
+  
   if (error) return <p>Error: {error}</p>;
-
-  const handleSelectChange = (value: string) => {
-    console.log("Selected value:", value);
-  };
-
+  
   return (
     <>
       <PageBreadcrumb pageTitle="Productos" />
@@ -52,9 +101,9 @@ export default function Products() {
               <Select
                 options={options}
                 placeholder="N°. Items"
-                onChange={handleSelectChange}
+                onChange={(e) => handleSelectChange(e)}
                 className="dark:bg-dark-900 xl:w-[120px]"
-                value="10"
+                value={numberPages}
               />
               <Button size="sm" variant="primary">
                 Agregar Nuevo
@@ -81,17 +130,27 @@ export default function Products() {
               <input
                 type="text"
                 placeholder="Buscar..."
-                className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-200 bg-transparent py-2.5 pl-12 pr-14 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-900 dark:bg-white/[0.03] dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[250px]"
+                className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-200 bg-transparent py-2.5 pl-12 pr-14 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[250px]"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
             </div>
           </div>
           {products != null ? (
-            <ProductDataTable
-              products={products}
-              onUpdate={(p) => updateProductInList(p)}
-            />
+            <>
+              <ProductDataTable
+                products={products}
+                onUpdate={(p) => updateProductInList(p)}
+                loading={loading}
+                onSortChange={toggleSort}
+                sort={sort}
+              />
+              <Pagination paginate={paginate} />
+            </>
           ) : (
-            <></>
+            <div className="text-center p-2 text-gray-800 text-theme-sm dark:text-white/90">
+              No hay Productos que mostrar...
+            </div>
           )}
         </ComponentCard>
       </div>

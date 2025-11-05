@@ -1,5 +1,5 @@
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Option {
   value: string;
@@ -9,6 +9,7 @@ interface Option {
 interface MultiSelectProps {
   label: string;
   options: Option[];
+  value: string[];
   defaultSelected?: string[];
   onChange?: (selected: string[]) => void;
   disabled?: boolean;
@@ -18,6 +19,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   label,
   options,
   defaultSelected = [],
+  value,
   onChange,
   disabled = false,
 }) => {
@@ -47,6 +49,12 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   const selectedValuesText = selectedOptions.map(
     (value) => options.find((option) => option.value === value)?.text || ""
   );
+
+  useEffect(() => {
+    if (value) {
+      setSelectedOptions(value);
+    }
+  }, [value]);
 
   return (
     <div className="w-full">

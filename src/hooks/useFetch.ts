@@ -2,10 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 
 function useFetch<T>(url: string) {
   const [data, setData] = useState<T | null>(null);
+  const [total, setTotal] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  const controllerRef = new AbortController();
 
   const fetchData = useCallback(async () => {
     try {
@@ -16,18 +15,17 @@ function useFetch<T>(url: string) {
         headers: {
           "Content-Type": "application/json",
         },
-        signal: controllerRef.signal,
       });
 
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
-
       const result = await response.json();
-      setData(result);
+      setTotal(result.total);
+      setData(result.products);
       setError(null);
-    } catch (err: any) {
-      if (err.name !== "AbortError") {
+    } catch (err: unknown) {
+      if (err instanceof Error) {
         setError(err.message);
       }
     } finally {
@@ -37,13 +35,9 @@ function useFetch<T>(url: string) {
 
   useEffect(() => {
     fetchData();
-
-    return () => {
-      controllerRef.abort();
-    };
   }, [fetchData]);
 
-  return { data, loading, error, refetch: fetchData };
+  return { data, loading, error, refetch: fetchData, total };
 }
 
 export default useFetch;

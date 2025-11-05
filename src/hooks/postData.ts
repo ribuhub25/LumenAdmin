@@ -12,6 +12,11 @@ export const postData = async (url: string, data: ProductResponse) => {
       body: JSON.stringify(data),
     });
 
+    if (response.status === 401 || response.status === 403) {
+      localStorage.removeItem("authToken");
+      window.location.href = "/signin";
+    }
+
     if (!response.ok) {
       throw new Error(`Error ${response.status}: ${response.statusText}`);
     }
