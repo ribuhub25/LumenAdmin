@@ -27,6 +27,7 @@ export interface IProduct {
   categories: ICategory[];
   quantity_sale: number;
   subtotal_sale: number;
+  image: File | null; 
 }
 
 export const PRODUCT_INITIAL: IProduct = {
@@ -62,4 +63,5 @@ export const PRODUCT_INITIAL: IProduct = {
   disc_vigence_days: 0,
   quantity_sale: 0,
   subtotal_sale: 0,
+  image: null
 };

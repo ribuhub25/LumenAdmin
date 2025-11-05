@@ -1,11 +1,25 @@
+import { useState } from "react";
 import ComponentCard from "../../common/ComponentCard";
 import { useDropzone } from "react-dropzone";
-// import Dropzone from "react-dropzone";
 
-const DropzoneComponent: React.FC = () => {
+type DropZoneProps = {
+  onImageSelect: (file: File) => void;
+};
+
+ 
+
+const Dropzone: React.FC<DropZoneProps> = ({onImageSelect}) => {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
   const onDrop = (acceptedFiles: File[]) => {
     console.log("Files dropped:", acceptedFiles);
     // Handle file uploads here
+    const file = acceptedFiles[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      onImageSelect(file);
+    }
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -18,23 +32,32 @@ const DropzoneComponent: React.FC = () => {
     },
   });
   return (
-    <ComponentCard title="Dropzone">
+    <ComponentCard title="Foto del Producto">
       <div className="transition border border-gray-300 border-dashed cursor-pointer dark:hover:border-brand-500 dark:border-gray-700 rounded-xl hover:border-brand-500">
-        <form
+        <div
           {...getRootProps()}
-          className={`dropzone rounded-xl   border-dashed border-gray-300 p-7 lg:p-10
-        ${
-          isDragActive
-            ? "border-brand-500 bg-gray-100 dark:bg-gray-800"
-            : "border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900"
-        }
+          className={`dropzone rounded-xl border-dashed border-gray-300 p-7 lg:p-10
+        ${isDragActive
+              ? "border-brand-500 bg-gray-100 dark:bg-gray-800"
+              : "border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900"
+            }
       `}
           id="demo-upload"
         >
           {/* Hidden Input */}
           <input {...getInputProps()} />
-
-          <div className="dz-message flex flex-col items-center m-0!">
+          {previewUrl ? (
+            <div className="flex flex-col justify-center">
+              <span className=" text-center mb-5 block w-full text-sm text-gray-700 dark:text-gray-400">
+                Mostrando una vista previa de la imagen ...
+              </span>
+              <img
+                src={previewUrl}
+                alt="Vista previa"
+                className="max-h-64 rounded-lg shadow-md"
+              />
+            </div>
+          ) : <div className="dz-message flex flex-col items-center m-0!">
             {/* Icon Container */}
             <div className="mb-[22px] flex justify-center">
               <div className="flex h-[68px] w-[68px]  items-center justify-center rounded-full bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-400">
@@ -69,10 +92,11 @@ const DropzoneComponent: React.FC = () => {
               Buscar Archivo
             </span>
           </div>
-        </form>
+          }
+        </div>
       </div>
     </ComponentCard>
   );
 };
 
-export default DropzoneComponent;
+export default Dropzone;

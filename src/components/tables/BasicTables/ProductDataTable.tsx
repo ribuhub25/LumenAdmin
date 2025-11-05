@@ -9,7 +9,7 @@ import {
 import Badge from "../../ui/badge/Badge";
 import { ListIcon, PencilIcon, TrashBinIcon } from "../../../icons";
 import { PRODUCT_INITIAL, IProduct } from "../../../models/ProductDTO";
-import ProductModal from "../../ui/modal/ProductModal";
+import ProductEditModal from "../../ui/modal/ProductEditModal";
 import { useState } from "react";
 import { useModal } from "../../../hooks/useModal";
 import { ArrowsUpDownIcon } from "@heroicons/react/20/solid";
@@ -44,13 +44,12 @@ export default function ProductDataTable({
   onSortChange,
   sort
 }: PropsDataTable) {
-  const { openModal, closeModal, isOpen } = useModal();
+  const { openModal: openEditModal, closeModal: closeEditModal, isOpen: isOpenEdit } = useModal();
   const [selectedProduct, setSelectedProduct] =
     useState<IProduct>(PRODUCT_INITIAL);
   const handleEditClick = (p: IProduct) => {
-    console.log(p);
     setSelectedProduct(p);
-    openModal();
+    openEditModal();
   };
 
   return (
@@ -177,10 +176,10 @@ export default function ProductDataTable({
         </div>
       </div>
       {/*MODAL DE EDICIÓN */}
-      <ProductModal
+      <ProductEditModal
         product={selectedProduct}
-        closeModal={closeModal}
-        isOpen={isOpen}
+        closeModal={closeEditModal}
+        isOpen={isOpenEdit}
         onUpdate={onUpdate}
       />
     </>

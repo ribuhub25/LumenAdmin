@@ -10,8 +10,10 @@ import Pagination from "../../components/ui/paginate/Pagination";
 import PropsPaginate, {
   PAGINATE_INITIAL,
 } from "../../components/ui/paginate/paginate";
+import ProductCreateModal from "../../components/ui/modal/ProductCreateModal";
+import { useModal } from "../../hooks/useModal";
 
-const options = [
+const optionsPaginate = [
   { value: "10", label: "10 Items" },
   { value: "15", label: "15 Items" },
   { value: "20", label: "20 Items" },
@@ -19,15 +21,17 @@ const options = [
 ];
 
 export default function Products() {
+  const { openModal: openCreateModal, closeModal: closeCreateModal, isOpen: isOpenCreate } = useModal();
   const [paginate, setPaginate] = useState<PropsPaginate>(PAGINATE_INITIAL);
   const [sort, setSort] = useState<string>("");
   const [products, setProducts] = useState<IProduct[] | null>(null);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [debounceSort, setDebounceSort] = useState<string>("");
   const fetchUrl = useMemo(() => {
-    return `http://localhost:3000/api/products?page=${paginate.currentPage}&limit=${paginate.numberPages}&sort=${sort}&search=${debouncedSearch}`;
-  }, [paginate.currentPage, paginate.numberPages, sort, debouncedSearch]);
-  const { data, loading, error, total } = useFetch<IProduct[]>(fetchUrl);
+    return `http://localhost:3000/api/products?page=${paginate.currentPage}&limit=${paginate.numberPages}&sort=${debounceSort}&search=${debouncedSearch}`;
+  }, [paginate.currentPage, paginate.numberPages, debounceSort, debouncedSearch]);
+  const { data, loading, error,refetch, total } = useFetch<IProduct[]>(fetchUrl);
   const [numberPages, setNumberPages] = useState("10");
 
   // Solo inicializa una vez
@@ -54,11 +58,17 @@ export default function Products() {
   }, [search]);
 
   useEffect(() => {
+    setTimeout(() => {
+      setDebounceSort(sort);
+    }, 500);
+  }, [sort]);
+
+  useEffect(() => {
     setPaginate((prev) => ({
       ...prev,
       currentPage: 1, // ← reinicia la página
     }));
-  }, [debouncedSearch]);
+  }, [debounceSort]);
 
   const updateProductInList = (updated: IProduct) => {
     setProducts((prev) =>
@@ -90,6 +100,11 @@ export default function Products() {
   
   if (error) return <p>Error: {error}</p>;
   
+  const handleCloseModal = () =>{
+    refetch();
+    closeCreateModal();
+  }
+
   return (
     <>
       <PageBreadcrumb pageTitle="Productos" />
@@ -99,14 +114,14 @@ export default function Products() {
           <div className="flex justify-between">
             <div className="flex gap-2">
               <Select
-                options={options}
+                options={optionsPaginate}
                 placeholder="N°. Items"
                 onChange={(e) => handleSelectChange(e)}
                 className="dark:bg-dark-900 xl:w-[120px]"
                 value={numberPages}
               />
-              <Button size="sm" variant="primary">
-                Agregar Nuevo
+              <Button size="sm" variant="primary" onClick={() => openCreateModal()} >
+                Agregar
               </Button>
             </div>
             <div className="relative">
@@ -154,6 +169,11 @@ export default function Products() {
           )}
         </ComponentCard>
       </div>
+      {/*MODAL DE CREACIÓN */}
+      <ProductCreateModal
+        isOpen={isOpenCreate}
+        closeModal={handleCloseModal}
+      />
     </>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
-function useFetch<T>(url: string) {
+function getData<T>(url: string) {
   const [data, setData] = useState<T | null>(null);
   const [total, setTotal] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -21,7 +21,7 @@ function useFetch<T>(url: string) {
       }
       const result = await response.json();
       setTotal(result.total);
-      setData(result.products);
+      setData(result);
       setError(null);
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -39,4 +39,4 @@ function useFetch<T>(url: string) {
   return { data, loading, error, refetch: fetchData, total };
 }
 
-export default useFetch;
+export default getData;

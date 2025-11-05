@@ -17,12 +17,17 @@ const url = "http://localhost:3000/api/auth/login";
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
-  const { login, loading, error } = useLogin();
+  const { login } = useLogin();
   const navigate = useNavigate();
-  const { control, handleSubmit, formState: { errors } } = useForm<IFormInput>();
+  const { control, handleSubmit, formState: { errors } } = useForm<IFormInput>({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
   const onSubmit: SubmitHandler<IFormInput> = async (data) => {
     const result = await login(url, data);
-    if(result) navigate('/', { replace: true }); 
+    if (result) navigate('/', { replace: true });
   };
 
   return (
@@ -95,6 +100,7 @@ export default function SignInForm() {
                   <Controller
                     name="email"
                     control={control}
+                    rules={{required: "El correo es obligatorio"}}
                     render={({ field }) => (
                       <Input
                         {...field}
@@ -113,6 +119,7 @@ export default function SignInForm() {
                     <Controller
                       name="password"
                       control={control}
+                      rules={{required: "La contraseña es obligatoria"}}
                       render={({ field }) => (
                         <Input
                           {...field}
@@ -150,7 +157,7 @@ export default function SignInForm() {
                   </Link>
                 </div>
                 <div>
-                  <Button className="w-full" size="sm">
+                  <Button className="w-full" size="sm" type="submit">
                     Iniciar Sesión
                   </Button>
                 </div>
