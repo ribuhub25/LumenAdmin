@@ -11,8 +11,6 @@ interface SelectProps {
   onChange: (value: string) => void;
   className?: string;
   value: string; // ← controlado desde fuera
-  error: boolean,
-  hint: string | undefined
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -21,7 +19,6 @@ const Select: React.FC<SelectProps> = ({
   onChange,
   className = "",
   value,
-  error = false
 }) => {
   return (
     <select

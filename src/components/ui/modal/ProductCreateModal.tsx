@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Modal } from "./Modal";
 import Input from "../../form/input/InputField";
 import TextArea from "../../form/input/TextArea";
@@ -6,7 +5,6 @@ import Label from "../../form/Label";
 import Select from "../../form/Select";
 import Switch from "../../form/switch/Switch";
 import Button from "../button/Button";
-import { PRODUCT_INITIAL, IProduct } from "../../../models/ProductDTO";
 import getData from "../../../hooks/getData";
 import Dropzone from "../../form/form-elements/DropZone";
 import { toast } from "sonner";
@@ -27,6 +25,8 @@ interface IFormInput {
   price: number
   stock: number
   brand_id: number
+  status: boolean,
+  image: File | null
 }
 
 export default function ProductCreateModal({
@@ -35,47 +35,46 @@ export default function ProductCreateModal({
   refetch
 }: PropsModal) {
   //CONSTANTES PARA EL FORMULARIO
-  const [productForm, setProductForm] = useState<IProduct>(PRODUCT_INITIAL);
+  //const [productForm, setProductForm] = useState<IProduct>(PRODUCT_INITIAL);
   const fetchBrandOptions = getData<Option[]>(
     "http://localhost:3000/api/brands/list"
   );
-  const { control,handleSubmit, formState: { errors } } = useForm<IFormInput>({
+  const { control, handleSubmit, formState: { errors }, reset } = useForm<IFormInput>({
     defaultValues: {
       name: "",
-      price: 0,
-      stock: 0,
-      brand_id: 1
+      brand_id: 1,
+      status: true,
+      image: null
     },
   });
 
   const onSubmit: SubmitHandler<IFormInput> = async (data) => {
-    console.log(data);
-    
-    // closeModal();
-    // const promise = postFormData("http://localhost:3000/api/products/create", formData);
-    // toast.promise(promise, {
-    //   loading: 'Creando el producto...',
-    //   success: (res) => {
-    //     if (res != undefined) refetch();
-    //     setProductForm(PRODUCT_INITIAL);
-    //     return res.message;
-    //   },
-    //   error: "Error en la petición de envío de datos para la inserción de un producto, Contácte con soporte técnico!"
-    // });
+    const formData = buildFormData(data);
+    closeModal();
+    const promise = postFormData("http://localhost:3000/api/products/create", formData);
+    toast.promise(promise, {
+      loading: 'Creando el producto...',
+      success: (res) => {
+        if (res != undefined) refetch();
+        reset();
+        return res.message;
+      },
+      error: "Error en la petición de envío de datos para la inserción de un producto, Contácte con soporte técnico!"
+    });
   };
 
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   const formData = new FormData();
-  //   formData.append("name", productForm.name);
-  //   formData.append("price", productForm.price.toString());
-  //   formData.append("stock", productForm.stock.toString());
-  //   formData.append("status", productForm.status.toString());
-  //   formData.append("brand_id", productForm.brand_id?.toString() || "");
-  //   if (productForm.image) {
-  //     formData.append("image", productForm.image);
-  //   }
-  // };
+  const buildFormData = (form: IFormInput): FormData => {
+    const formData = new FormData();
+    formData.append("name", form.name);
+    formData.append("price", form.price.toString());
+    formData.append("stock", form.stock.toString());
+    formData.append("brand_id", form.brand_id.toString());
+    formData.append("status", form.status ? "1" : "0"); // o "true"/"false" según tu backend
+    if (form.image) {
+      formData.append("image", form.image);
+    }
+    return formData;
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
@@ -105,13 +104,6 @@ export default function ProductCreateModal({
                       render={({ field }) => (
                         <TextArea
                           {...field}
-                          value={productForm.name ?? ""}
-                          onChange={(e) =>
-                            setProductForm((prev) => ({
-                              ...prev,
-                              name: e,
-                            }))
-                          }
                           placeholder="Nombre del Producto"
                           rows={2}
                           error={!!errors.name}
@@ -130,15 +122,8 @@ export default function ProductCreateModal({
                         render={({ field }) => (
                           <Input
                             {...field}
+                            placeholder="Precio"
                             type="number"
-                            value={productForm.price ?? 0}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                              setProductForm((prev) => ({
-                                ...prev,
-                                price: parseFloat(e.target.value) || 0,
-                              }))
-                            }
-                            placeholder="precio"
                             error={!!errors.price}
                             hint={errors.price?.message}
                           />
@@ -150,7 +135,6 @@ export default function ProductCreateModal({
                       <Input
                         type="number"
                         disabled
-                        value={productForm.disc_value ?? 0}
                       />
                     </div>
                     <div>
@@ -163,13 +147,6 @@ export default function ProductCreateModal({
                           <Input
                             {...field}
                             type="number"
-                            value={productForm.stock ?? 0}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                              setProductForm((prev) => ({
-                                ...prev,
-                                stock: parseFloat(e.target.value) || 0,
-                              }))
-                            }
                             placeholder="Stock"
                             error={!!errors.stock}
                             hint={errors.stock?.message}
@@ -190,39 +167,34 @@ export default function ProductCreateModal({
                             {...field}
                             options={fetchBrandOptions.data ?? []}
                             placeholder="Seleccione una marca"
-                            value={productForm.brand_id?.toString() || ""}
-                            onChange={(value: string) =>
-                              setProductForm((prev) => ({
-                                ...prev,
-                                brand_id: parseInt(value),
-                                brand_name:
-                                  fetchBrandOptions.data?.find(
-                                    (b) => b.value == value
-                                  )?.label ?? "",
-                              }))
-                            }
+                            value={field.value.toString()}
                             className="dark:bg-dark-900"
-                            error={!!errors.brand_id}
-                            hint={errors.brand_id?.message}
                           />
                         )}
                       />
                     </div>
                     <div className="my-auto pt-5">
-                      <Switch
-                        label="Producto Activo"
-                        checked={productForm.status === 1}
-                        onChange={(checked: boolean) => {
-                          setProductForm((prev) => ({
-                            ...prev,
-                            status: checked ? 1 : 0,
-                          }));
-                        }}
+                      <Controller
+                        name="status"
+                        control={control}
+                        render={({ field }) => (
+                          <Switch
+                            {...field}
+                            label="Producto Activo"
+                            checked={field.value}
+                          />
+                        )}
                       />
                     </div>
                   </div>
                   <div className="my-auto pt-5">
-                    <Dropzone onImageSelect={(file) => setProductForm((prev) => ({ ...prev, image: file }))} />
+                    <Controller
+                      name="image"
+                      control={control}
+                      render={({ field }) => (
+                        <Dropzone {...field} onImageSelect={(file: File) => field.onChange(file)} />
+                      )}
+                    />
                   </div>
                 </div>
               </div>

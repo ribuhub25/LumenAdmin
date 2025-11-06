@@ -44,7 +44,7 @@ export default function Products() {
     debounceSort,
     debouncedSearch,
   ]);
-  const { data, loading, error, refetch, total } =
+  const { data, loading, refetch, total } =
     getDataPaginate<IProduct[]>(fetchUrl);
   const [numberPages, setNumberPages] = useState("10");
 
