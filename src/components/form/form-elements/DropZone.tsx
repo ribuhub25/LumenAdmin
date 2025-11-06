@@ -54,7 +54,7 @@ const Dropzone: React.FC<DropZoneProps> = ({onImageSelect}) => {
               <img
                 src={previewUrl}
                 alt="Vista previa"
-                className="max-h-64 rounded-lg shadow-md"
+                className="rounded-lg shadow-md"
               />
             </div>
           ) : <div className="dz-message flex flex-col items-center m-0!">

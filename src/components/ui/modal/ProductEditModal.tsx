@@ -8,10 +8,11 @@ import Switch from "../../form/switch/Switch";
 import Button from "../button/Button";
 import MultiSelect from "../../form/MultiSelect";
 import { PRODUCT_INITIAL, IProduct } from "../../../models/ProductDTO";
-import { postData } from "../../../hooks/postData";
+import { putData } from "../../../hooks/putData";
 import { ProductResponse } from "../../../models/ProductResponse";
 import { ICategory } from "../../../models/CategoryDTO";
 import getData from "../../../hooks/getData";
+import { toast } from "sonner";
 
 interface MultiOptions {
   value: string;
@@ -77,17 +78,21 @@ export default function ProductEditModal({
 
   const handleSubmit = async (e?: React.MouseEvent<HTMLButtonElement>) => {
     e?.preventDefault(); // ← evita el reload si se dispara desde un form
-    try {
+    
       const updatedProduct = {
         ...productForm,
       };
       const castedProduct = castToProductResponse(updatedProduct);
-      await postData("http://localhost:3000/api/products/save", castedProduct);
-      onUpdate(updatedProduct);
       closeModal();
-    } catch (error) {
-      console.error("Error al guardar el producto:", error);
-    }
+      const promise = putData("http://localhost:3000/api/products/save", castedProduct);
+      toast.promise(promise, {
+        loading: 'Actualizando el producto...',
+        success: (res) => {
+          if (res != undefined) onUpdate(updatedProduct);
+          return res.message;
+        },
+        error: "Error en la petición de envío de datos para la actualización de un producto, Contácte con soporte técnico!"
+      });
   };
 
   // OPCIONES DE CATEGORIAS

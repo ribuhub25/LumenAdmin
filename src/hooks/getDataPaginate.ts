@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 
-function useFetch<T>(url: string) {
+function getDataPaginate<T>(url: string) {
   const [data, setData] = useState<T | null>(null);
   const [total, setTotal] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -15,13 +16,14 @@ function useFetch<T>(url: string) {
           "Content-Type": "application/json",
         },
       });
+      const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+        toast.warning(`${ result.message ?? result.error}`);
+        throw new Error(`${ result.message ?? result.error}`);
       }
-      const result = await response.json();
-      setTotal(result.total);
-      setData(result.products);
+      setTotal(result.pagination.total_results);
+      setData(result.data);
       setError(null);
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -39,4 +41,4 @@ function useFetch<T>(url: string) {
   return { data, loading, error, refetch: fetchData, total };
 }
 
-export default useFetch;
+export default getDataPaginate;

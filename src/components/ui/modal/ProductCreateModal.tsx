@@ -9,6 +9,9 @@ import Button from "../button/Button";
 import { PRODUCT_INITIAL, IProduct } from "../../../models/ProductDTO";
 import getData from "../../../hooks/getData";
 import Dropzone from "../../form/form-elements/DropZone";
+import { toast } from "sonner";
+import { postFormData } from "../../../hooks/postFormData";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
 
 interface Option {
   value: string;
@@ -18,6 +21,12 @@ interface PropsModal {
   isOpen: boolean;
   closeModal: () => void;
   refetch: () => void;
+}
+interface IFormInput {
+  name: string
+  price: number
+  stock: number
+  brand_id: number
 }
 
 export default function ProductCreateModal({
@@ -30,38 +39,43 @@ export default function ProductCreateModal({
   const fetchBrandOptions = getData<Option[]>(
     "http://localhost:3000/api/brands/list"
   );
+  const { control,handleSubmit, formState: { errors } } = useForm<IFormInput>({
+    defaultValues: {
+      name: "",
+      price: 0,
+      stock: 0,
+      brand_id: 1
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const formData = new FormData();
-    formData.append("name", productForm.name);
-    formData.append("price", productForm.price.toString());
-    formData.append("stock", productForm.stock.toString());
-    formData.append("status", productForm.status.toString());
-    formData.append("brand_id", productForm.brand_id?.toString() || "");
-    if (productForm.image) {
-      formData.append("image", productForm.image);
-    }
-    try {
-      const response = await fetch("http://localhost:3000/api/products/create", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem("authToken")}`
-        },
-        body: formData
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al enviar el formulario");
-      }
-      //const result = await response.json();
-      refetch();
-      closeModal();
-    } catch (error) {
-      console.error("Error:", error);
-    }
+  const onSubmit: SubmitHandler<IFormInput> = async (data) => {
+    console.log(data);
+    
+    // closeModal();
+    // const promise = postFormData("http://localhost:3000/api/products/create", formData);
+    // toast.promise(promise, {
+    //   loading: 'Creando el producto...',
+    //   success: (res) => {
+    //     if (res != undefined) refetch();
+    //     setProductForm(PRODUCT_INITIAL);
+    //     return res.message;
+    //   },
+    //   error: "Error en la petición de envío de datos para la inserción de un producto, Contácte con soporte técnico!"
+    // });
   };
+
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   const formData = new FormData();
+  //   formData.append("name", productForm.name);
+  //   formData.append("price", productForm.price.toString());
+  //   formData.append("stock", productForm.stock.toString());
+  //   formData.append("status", productForm.status.toString());
+  //   formData.append("brand_id", productForm.brand_id?.toString() || "");
+  //   if (productForm.image) {
+  //     formData.append("image", productForm.image);
+  //   }
+  // };
 
   return (
     <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
@@ -74,7 +88,7 @@ export default function ProductCreateModal({
             Rellena los campos del formulario y guarda los cambios!
           </p>
         </div>
-        <form className="flex flex-col" onSubmit={handleSubmit}>
+        <form className="flex flex-col" onSubmit={handleSubmit(onSubmit)}>
           <div className="custom-scrollbar h-[450px] overflow-y-auto px-2 pb-3">
             <div>
               <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
@@ -84,30 +98,51 @@ export default function ProductCreateModal({
                 <div className="col-span-2">
                   <div>
                     <Label>Nombre</Label>
-                    <TextArea
-                      value={productForm.name ?? ""}
-                      onChange={(e) =>
-                        setProductForm((prev) => ({
-                          ...prev,
-                          name: e,
-                        }))
-                      }
-                      placeholder="Nombre del Producto"
-                      rows={2}
+                    <Controller
+                      name="name"
+                      control={control}
+                      rules={{ required: "El nombre es obligatorio" }}
+                      render={({ field }) => (
+                        <TextArea
+                          {...field}
+                          value={productForm.name ?? ""}
+                          onChange={(e) =>
+                            setProductForm((prev) => ({
+                              ...prev,
+                              name: e,
+                            }))
+                          }
+                          placeholder="Nombre del Producto"
+                          rows={2}
+                          error={!!errors.name}
+                          hint={errors.name?.message}
+                        />
+                      )}
                     />
                   </div>
                   <div className="flex flex-row gap-2">
                     <div>
                       <Label>Precio</Label>
-                      <Input
-                        type="number"
-                        value={productForm.price ?? 0}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setProductForm((prev) => ({
-                            ...prev,
-                            price: parseFloat(e.target.value) || 0,
-                          }))
-                        }
+                      <Controller
+                        name="price"
+                        control={control}
+                        rules={{ required: "El correo es obligatorio" }}
+                        render={({ field }) => (
+                          <Input
+                            {...field}
+                            type="number"
+                            value={productForm.price ?? 0}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              setProductForm((prev) => ({
+                                ...prev,
+                                price: parseFloat(e.target.value) || 0,
+                              }))
+                            }
+                            placeholder="precio"
+                            error={!!errors.price}
+                            hint={errors.price?.message}
+                          />
+                        )}
                       />
                     </div>
                     <div>
@@ -120,36 +155,57 @@ export default function ProductCreateModal({
                     </div>
                     <div>
                       <Label>Stock</Label>
-                      <Input
-                        type="number"
-                        value={productForm.stock ?? 0}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setProductForm((prev) => ({
-                            ...prev,
-                            stock: parseFloat(e.target.value) || 0,
-                          }))
-                        }
+                      <Controller
+                        name="stock"
+                        control={control}
+                        rules={{ required: "El stock es obligatorio" }}
+                        render={({ field }) => (
+                          <Input
+                            {...field}
+                            type="number"
+                            value={productForm.stock ?? 0}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              setProductForm((prev) => ({
+                                ...prev,
+                                stock: parseFloat(e.target.value) || 0,
+                              }))
+                            }
+                            placeholder="Stock"
+                            error={!!errors.stock}
+                            hint={errors.stock?.message}
+                          />
+                        )}
                       />
                     </div>
                   </div>
                   <div className="pt-2 flex flex-row gap-2 justify-between">
                     <div className="w-5/7">
                       <Label>Marca</Label>
-                      <Select
-                        options={fetchBrandOptions.data ?? []}
-                        placeholder="Seleccione una marca"
-                        value={productForm.brand_id?.toString() || ""}
-                        onChange={(value: string) =>
-                          setProductForm((prev) => ({
-                            ...prev,
-                            brand_id: parseInt(value),
-                            brand_name:
-                              fetchBrandOptions.data?.find(
-                                (b) => b.value == value
-                              )?.label ?? "",
-                          }))
-                        }
-                        className="dark:bg-dark-900"
+                      <Controller
+                        name="brand_id"
+                        control={control}
+                        rules={{ required: "La marca es obligatorio" }}
+                        render={({ field }) => (
+                          <Select
+                            {...field}
+                            options={fetchBrandOptions.data ?? []}
+                            placeholder="Seleccione una marca"
+                            value={productForm.brand_id?.toString() || ""}
+                            onChange={(value: string) =>
+                              setProductForm((prev) => ({
+                                ...prev,
+                                brand_id: parseInt(value),
+                                brand_name:
+                                  fetchBrandOptions.data?.find(
+                                    (b) => b.value == value
+                                  )?.label ?? "",
+                              }))
+                            }
+                            className="dark:bg-dark-900"
+                            error={!!errors.brand_id}
+                            hint={errors.brand_id?.message}
+                          />
+                        )}
                       />
                     </div>
                     <div className="my-auto pt-5">

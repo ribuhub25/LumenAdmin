@@ -1,6 +1,7 @@
+import { toast } from "sonner";
 import { ProductResponse } from "../models/ProductResponse";
 
-export const postData = async (url: string, data: ProductResponse) => {
+export const putData = async (url: string, data: ProductResponse) => {
   const token = localStorage.getItem("authToken");
   try {
     const response = await fetch(url, {
@@ -16,15 +17,15 @@ export const postData = async (url: string, data: ProductResponse) => {
       localStorage.removeItem("authToken");
       window.location.href = "/signin";
     }
+    const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
+      toast.warning(`${result.message ?? result.error}`);
+      throw new Error(`${result.message ?? result.error}`);
     }
 
-    const result = await response.json();
     return result;
   } catch (error) {
-    console.error("Error al hacer POST:", error);
-    throw error;
+    console.error(error);
   }
 };

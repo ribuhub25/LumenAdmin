@@ -1,6 +1,8 @@
 import { Modal } from "./Modal";
 import Button from "../button/Button";
 import { AlertIcon } from "../../../icons";
+import { toast } from "sonner";
+import { deleteData } from "../../../hooks/deleteData";
 
 interface PropsModal {
   productId: number,
@@ -17,25 +19,17 @@ export default function ProductRemoveModal({
   text,
   productId
 }: PropsModal) {
-  const handleSubmit = async() => {
-    try {
-      const response = await fetch(`/api/products/remove/${productId}`, {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem("authToken")}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al eliminar el producto");
-      }
-      closeModal();
-      refetch();
-      console.log("Producto eliminado correctamente");
-      // Aquí puedes actualizar tu estado o recargar la lista
-    } catch (error: unknown) {
-      console.error("Error:", error);
-    }
+  const handleSubmit = async () => {
+    closeModal();
+    const promise = deleteData(`http://localhost:3000/api/products/remove/${productId}`);
+    toast.promise(promise, {
+      loading: 'Eliminando el producto...',
+      success: (res) => {
+        if (res != undefined) refetch();
+        return res.message;
+      },
+      error: "Error en la petición para la eliminación de un producto, Contácte con soporte técnico!"
+    });
   }
 
   return (

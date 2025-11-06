@@ -4,7 +4,7 @@ import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import Select from "../../components/form/Select";
 import ProductDataTable from "../../components/tables/BasicTables/ProductDataTable";
 import Button from "../../components/ui/button/Button";
-import useFetch from "../../hooks/useFetch";
+import getDataPaginate from "../../hooks/getDataPaginate";
 import { IProduct } from "../../models/ProductDTO";
 import Pagination from "../../components/ui/paginate/Pagination";
 import PropsPaginate, {
@@ -45,7 +45,7 @@ export default function Products() {
     debouncedSearch,
   ]);
   const { data, loading, error, refetch, total } =
-    useFetch<IProduct[]>(fetchUrl);
+    getDataPaginate<IProduct[]>(fetchUrl);
   const [numberPages, setNumberPages] = useState("10");
 
   // Solo inicializa una vez
@@ -96,7 +96,7 @@ export default function Products() {
 
     return () => clearTimeout(timer);
   }, []);
-  
+
   const updateProductInList = (updated: IProduct) => {
     setProducts((prev) =>
       prev ? prev.map((p) => (p.id === updated.id ? updated : p)) : null
@@ -124,8 +124,6 @@ export default function Products() {
       currentPage: 1,
     }));
   }
-
-  if (error) return <p>Error: {error}</p>;
 
   return (
     <>

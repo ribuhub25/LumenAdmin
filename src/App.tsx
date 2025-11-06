@@ -23,12 +23,13 @@ import Brands from "./pages/Maintenance/Brands";
 import Categories from "./pages/Maintenance/Categories";
 import Customers from "./pages/Maintenance/Customers";
 import PrivateRoute from './components/routes/PrivateRoute';
-
+import { Toaster } from "sonner";
 
 
 export default function App() {
   return (
     <>
+      <Toaster position="top-right" richColors />
       <Router>
         <ScrollToTop />
         <Routes>
