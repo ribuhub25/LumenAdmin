@@ -13,13 +13,15 @@ import ProductEditModal from "../../ui/modal/ProductEditModal";
 import { useState } from "react";
 import { useModal } from "../../../hooks/useModal";
 import { ArrowsUpDownIcon } from "@heroicons/react/20/solid";
+import ProductRemoveModal from "../../ui/modal/ProductRemoveModal";
 
 interface PropsDataTable {
   products: IProduct[];
   onUpdate: (product: IProduct) => void;
   loading: boolean;
   onSortChange: (sort: string) => void;
-  sort: string
+  sort: string,
+  refetch: () => void
 }
 
 const Headers = [
@@ -36,20 +38,36 @@ const Headers = [
   { name: "Estado", orderable: false, visible: true, sortValue: "" },
   { name: "Acciones", orderable: false, visible: true, sortValue: "" },
 ];
+const PropsModalRemove = {
+  productId: 0,
+  text: ""
+};
 
 export default function ProductDataTable({
   products,
   onUpdate,
   loading,
   onSortChange,
-  sort
+  sort,
+  refetch
 }: PropsDataTable) {
   const { openModal: openEditModal, closeModal: closeEditModal, isOpen: isOpenEdit } = useModal();
+  const { openModal: openRemoveModal, closeModal: closeRemoveModal, isOpen: isOpenRemove } = useModal();
   const [selectedProduct, setSelectedProduct] =
     useState<IProduct>(PRODUCT_INITIAL);
+  const [propsRemove, setPropsRemove] = useState(PropsModalRemove);
+  
   const handleEditClick = (p: IProduct) => {
     setSelectedProduct(p);
     openEditModal();
+  };
+
+  const handleRemoveClick = (p: IProduct) => {
+    setPropsRemove({
+      productId: p.id,
+      text: p.name
+    })
+    openRemoveModal();
   };
 
   return (
@@ -90,7 +108,10 @@ export default function ProductDataTable({
             {!loading ? (
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {products.map((product: IProduct) => (
-                  <TableRow key={product.id}>
+                  <TableRow
+                    key={product.id}
+                    className="transition-opacity duration-500 ease-in-out opacity-100"
+                  >
                     <TableCell className="px-5 py-4 sm:px-6 text-start">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 overflow-hidden rounded-full">
@@ -146,6 +167,7 @@ export default function ProductDataTable({
                         <button
                           type="button"
                           className="p-1 bg-red-100 dark:bg-red-950 rounded-2xl"
+                          onClick={() => handleRemoveClick(product)}
                         >
                           <TrashBinIcon />
                         </button>
@@ -161,15 +183,18 @@ export default function ProductDataTable({
                 ))}
               </TableBody>
             ) : (
-              <TableBody className="">
-                <tr>
+              <TableBody className="items-center">
+                <TableRow>
                   <td
-                    className="text-center p-2 text-gray-800 text-theme-sm dark:text-white/90"
+                    className="text-center p-4 text-gray-800 text-theme-sm dark:text-white/90 transition-opacity duration-500 ease-in-out opacity-100"
                     colSpan={100}
                   >
-                    Cargando los Productos en la tabla...
+                    <div className="flex justify-center items-center space-x-3">
+                      <div className="h-5 w-5 border-4 border-gray-300 border-t-gray-800 dark:border-t-white rounded-full animate-spin"></div>
+                      <span>Cargando los Productos en la tabla...</span>
+                    </div>
                   </td>
-                </tr>
+                </TableRow>
               </TableBody>
             )}
           </Table>
@@ -181,6 +206,14 @@ export default function ProductDataTable({
         closeModal={closeEditModal}
         isOpen={isOpenEdit}
         onUpdate={onUpdate}
+      />
+      {/*MODAL DE ELIMINACIÓN */}
+      <ProductRemoveModal
+        text={propsRemove.text}
+        productId={propsRemove.productId}
+        closeModal={closeRemoveModal}
+        isOpen={isOpenRemove}
+        refetch={refetch}
       />
     </>
   );

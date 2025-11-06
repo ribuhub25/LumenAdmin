@@ -17,11 +17,13 @@ interface Option {
 interface PropsModal {
   isOpen: boolean;
   closeModal: () => void;
+  refetch: () => void;
 }
 
 export default function ProductCreateModal({
   isOpen,
   closeModal,
+  refetch
 }: PropsModal) {
   //CONSTANTES PARA EL FORMULARIO
   const [productForm, setProductForm] = useState<IProduct>(PRODUCT_INITIAL);
@@ -53,8 +55,8 @@ export default function ProductCreateModal({
       if (!response.ok) {
         throw new Error("Error al enviar el formulario");
       }
-
-      const result = await response.json();
+      //const result = await response.json();
+      refetch();
       closeModal();
     } catch (error) {
       console.error("Error:", error);

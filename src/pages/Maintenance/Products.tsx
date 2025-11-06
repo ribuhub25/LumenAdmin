@@ -21,17 +21,31 @@ const optionsPaginate = [
 ];
 
 export default function Products() {
-  const { openModal: openCreateModal, closeModal: closeCreateModal, isOpen: isOpenCreate } = useModal();
+  const {
+    openModal: openCreateModal,
+    closeModal: closeCreateModal,
+    isOpen: isOpenCreate,
+  } = useModal();
   const [paginate, setPaginate] = useState<PropsPaginate>(PAGINATE_INITIAL);
   const [sort, setSort] = useState<string>("");
   const [products, setProducts] = useState<IProduct[] | null>(null);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [debounceSort, setDebounceSort] = useState<string>("");
+  const [showLoader, setShowLoader] = useState(true);
+  const [hideAnimation, setHideAnimation] = useState(false);
+
+
   const fetchUrl = useMemo(() => {
     return `http://localhost:3000/api/products?page=${paginate.currentPage}&limit=${paginate.numberPages}&sort=${debounceSort}&search=${debouncedSearch}`;
-  }, [paginate.currentPage, paginate.numberPages, debounceSort, debouncedSearch]);
-  const { data, loading, error,refetch, total } = useFetch<IProduct[]>(fetchUrl);
+  }, [
+    paginate.currentPage,
+    paginate.numberPages,
+    debounceSort,
+    debouncedSearch,
+  ]);
+  const { data, loading, error, refetch, total } =
+    useFetch<IProduct[]>(fetchUrl);
   const [numberPages, setNumberPages] = useState("10");
 
   // Solo inicializa una vez
@@ -70,6 +84,19 @@ export default function Products() {
     }));
   }, [debounceSort]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setHideAnimation(true); // activa animación de salida
+
+      // espera que termine la animación antes de ocultar el loader
+      setTimeout(() => {
+        setShowLoader(false);
+      }, 500); // duración de la animación de salida
+    }, 1000); // mínimo 1 segundo de carga
+
+    return () => clearTimeout(timer);
+  }, []);
+  
   const updateProductInList = (updated: IProduct) => {
     setProducts((prev) =>
       prev ? prev.map((p) => (p.id === updated.id ? updated : p)) : null
@@ -85,11 +112,11 @@ export default function Products() {
       return `${field}:asc`;
     });
   }
-  
+
   function handleSelectChange(value: string) {
     const numPages = parseInt(value);
     if (paginate.numberPages === numPages) return;
-    
+
     setNumberPages(value);
     setPaginate((prev) => ({
       ...prev,
@@ -97,13 +124,8 @@ export default function Products() {
       currentPage: 1,
     }));
   }
-  
+
   if (error) return <p>Error: {error}</p>;
-  
-  const handleCloseModal = () =>{
-    refetch();
-    closeCreateModal();
-  }
 
   return (
     <>
@@ -120,7 +142,11 @@ export default function Products() {
                 className="dark:bg-dark-900 xl:w-[120px]"
                 value={numberPages}
               />
-              <Button size="sm" variant="primary" onClick={() => openCreateModal()} >
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => openCreateModal()}
+              >
                 Agregar
               </Button>
             </div>
@@ -151,7 +177,7 @@ export default function Products() {
               />
             </div>
           </div>
-          {products != null ? (
+          {products != null && !showLoader ? (
             <>
               <ProductDataTable
                 products={products}
@@ -159,12 +185,22 @@ export default function Products() {
                 loading={loading}
                 onSortChange={toggleSort}
                 sort={sort}
+                refetch={refetch}
               />
               <Pagination paginate={paginate} />
             </>
           ) : (
-            <div className="text-center p-2 text-gray-800 text-theme-sm dark:text-white/90">
-              No hay Productos que mostrar...
+            <div
+              className={`pointer-events-none fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900 z-50 ${
+                hideAnimation ? "slide-up-fade-out" : "slide-down"
+              }`}
+            >
+              <div className="flex flex-col items-center space-y-4">
+                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-gray-700 dark:text-white text-lg font-medium">
+                  Cargando, por favor espera...
+                </p>
+              </div>
             </div>
           )}
         </ComponentCard>
@@ -172,7 +208,8 @@ export default function Products() {
       {/*MODAL DE CREACIÓN */}
       <ProductCreateModal
         isOpen={isOpenCreate}
-        closeModal={handleCloseModal}
+        closeModal={closeCreateModal}
+        refetch={refetch}
       />
     </>
   );
