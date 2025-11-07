@@ -104,7 +104,7 @@ export default function SignInForm() {
                     render={({ field }) => (
                       <Input
                         {...field}
-                        placeholder="Nombre"
+                        placeholder="Correo"
                         error={!!errors.email}
                         hint={errors.email?.message}
                       />

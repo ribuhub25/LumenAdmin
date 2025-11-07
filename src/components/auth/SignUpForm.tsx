@@ -1,13 +1,39 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
+
+interface IFormInput {
+  email: string;
+  password: string;
+  firstname: string;
+  lastname: string;
+}
 
 export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const navigate = useNavigate();
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<IFormInput>({
+    defaultValues: {
+      email: "",
+      password: "",
+      firstname: "",
+      lastname: "",
+    },
+  });
+
+  const onSubmit: SubmitHandler<IFormInput> = async (data) => {
+    console.log(data);
+  };
+
   return (
     <div className="flex flex-col flex-1 w-full overflow-y-auto lg:w-1/2 no-scrollbar">
       <div className="w-full max-w-md mx-auto mb-5 sm:pt-10">
@@ -16,17 +42,17 @@ export default function SignUpForm() {
           className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
         >
           <ChevronLeftIcon className="size-5" />
-          Back to dashboard
+          Regresar al tablero
         </Link>
       </div>
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
         <div>
           <div className="mb-5 sm:mb-8">
             <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
-              Sign Up
+              Registrar
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Enter your email and password to sign up!
+              Ingresa un correo y contraseña para registrarte a la plataforma!
             </p>
           </div>
           <div>
@@ -56,7 +82,7 @@ export default function SignUpForm() {
                     fill="#EB4335"
                   />
                 </svg>
-                Sign up with Google
+                Ingresar con Google
               </button>
               <button className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
                 <svg
@@ -69,7 +95,7 @@ export default function SignUpForm() {
                 >
                   <path d="M15.6705 1.875H18.4272L12.4047 8.75833L19.4897 18.125H13.9422L9.59717 12.4442L4.62554 18.125H1.86721L8.30887 10.7625L1.51221 1.875H7.20054L11.128 7.0675L15.6705 1.875ZM14.703 16.475H16.2305L6.37054 3.43833H4.73137L14.703 16.475Z" />
                 </svg>
-                Sign up with X
+                Ingresar con X
               </button>
             </div>
             <div className="relative py-3 sm:py-5">
@@ -78,59 +104,90 @@ export default function SignUpForm() {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="p-2 text-gray-400 bg-white dark:bg-gray-900 sm:px-5 sm:py-2">
-                  Or
+                  Ó
                 </span>
               </div>
             </div>
-            <form>
+            <form onSubmit={handleSubmit(onSubmit)}>
               <div className="space-y-5">
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   {/* <!-- First Name --> */}
                   <div className="sm:col-span-1">
                     <Label>
-                      First Name<span className="text-error-500">*</span>
+                      Nombres<span className="text-error-500">*</span>
                     </Label>
-                    <Input
-                      type="text"
-                      id="fname"
-                      name="fname"
-                      placeholder="Enter your first name"
+                    <Controller
+                      name="firstname"
+                      control={control}
+                      rules={{ required: "El nombre es obligatorio" }}
+                      render={({ field }) => (
+                        <Input
+                          {...field}
+                          placeholder="Escribe tus Nombres"
+                          error={!!errors.firstname}
+                          hint={errors.firstname?.message}
+                        />
+                      )}
                     />
                   </div>
                   {/* <!-- Last Name --> */}
                   <div className="sm:col-span-1">
                     <Label>
-                      Last Name<span className="text-error-500">*</span>
+                      Apellidos<span className="text-error-500">*</span>
                     </Label>
-                    <Input
-                      type="text"
-                      id="lname"
-                      name="lname"
-                      placeholder="Enter your last name"
+                    <Controller
+                      name="lastname"
+                      control={control}
+                      rules={{ required: "El apellido es obligatorio" }}
+                      render={({ field }) => (
+                        <Input
+                          {...field}
+                          placeholder="Escribe tus Apellidos"
+                          error={!!errors.lastname}
+                          hint={errors.lastname?.message}
+                        />
+                      )}
                     />
                   </div>
                 </div>
                 {/* <!-- Email --> */}
                 <div>
                   <Label>
-                    Email<span className="text-error-500">*</span>
+                    Correo<span className="text-error-500">*</span>
                   </Label>
-                  <Input
-                    type="email"
-                    id="email"
+                  <Controller
                     name="email"
-                    placeholder="Enter your email"
+                    control={control}
+                    rules={{ required: "El correo es obligatorio" }}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        placeholder="Correo"
+                        error={!!errors.email}
+                        hint={errors.email?.message}
+                      />
+                    )}
                   />
                 </div>
                 {/* <!-- Password --> */}
                 <div>
                   <Label>
-                    Password<span className="text-error-500">*</span>
+                    Contraseña<span className="text-error-500">*</span>
                   </Label>
                   <div className="relative">
-                    <Input
-                      placeholder="Enter your password"
-                      type={showPassword ? "text" : "password"}
+                    <Controller
+                      name="password"
+                      control={control}
+                      rules={{ required: "La contraseña es obligatoria" }}
+                      render={({ field }) => (
+                        <Input
+                          {...field}
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Ingresa tu contraseña"
+                          error={!!errors.password}
+                          hint={errors.password?.message}
+                        />
+                      )}
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -152,20 +209,23 @@ export default function SignUpForm() {
                     onChange={setIsChecked}
                   />
                   <p className="inline-block font-normal text-gray-500 dark:text-gray-400">
-                    By creating an account means you agree to the{" "}
+                    Para crear una cuenta, necesitar aceptar los{" "}
                     <span className="text-gray-800 dark:text-white/90">
-                      Terms and Conditions,
+                      Terminos y Condiciones,
                     </span>{" "}
-                    and our{" "}
+                    y nuestra{" "}
                     <span className="text-gray-800 dark:text-white">
-                      Privacy Policy
+                      Política de privacidad
                     </span>
                   </p>
                 </div>
                 {/* <!-- Button --> */}
                 <div>
-                  <button className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600">
-                    Sign Up
+                  <button
+                    type="submit"
+                    className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600"
+                  >
+                    Registrar
                   </button>
                 </div>
               </div>
@@ -173,12 +233,12 @@ export default function SignUpForm() {
 
             <div className="mt-5">
               <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
-                Already have an account? {""}
+                ¿Ya tienes una cuenta? {""}
                 <Link
                   to="/signin"
                   className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
                 >
-                  Sign In
+                  Inicia Sesión
                 </Link>
               </p>
             </div>

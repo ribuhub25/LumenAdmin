@@ -35,7 +35,6 @@ export default function ProductCreateModal({
   refetch
 }: PropsModal) {
   //CONSTANTES PARA EL FORMULARIO
-  //const [productForm, setProductForm] = useState<IProduct>(PRODUCT_INITIAL);
   const fetchBrandOptions = getData<Option[]>(
     "http://localhost:3000/api/brands/list"
   );
